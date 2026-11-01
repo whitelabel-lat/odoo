@@ -30,8 +30,9 @@ services:
         exec python3 /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf
     volumes:
       - odoo-web-data:/var/lib/odoo
-      # Módulos propios (whitelabel-lat/odoo-wl-addons, rama 20.0), copiados al servidor como en el 19.
-      - ../files/addons:/mnt/extra-addons:ro
+      # Módulos propios: los deja aquí el servicio «odoo-20-modulos» de Dokploy, que se despliega
+      # desde whitelabel-lat/odoo-wl-addons (rama 20.0). Odoo solo los lee.
+      - odoo20-addons:/mnt/extra-addons:ro
     networks: [dokploy-network]
     logging:
       driver: json-file
@@ -43,3 +44,6 @@ networks:
 
 volumes:
   odoo-web-data:
+  odoo20-addons:
+    external: true
+    name: odoo20-addons
