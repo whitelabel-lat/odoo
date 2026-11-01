@@ -27,6 +27,13 @@ services:
     command:
       - |
         printf '[options]\naddons_path = /mnt/extra-addons,/opt/odoo/addons,/opt/odoo/odoo/addons\ndata_dir = /var/lib/odoo\ndb_host = odoo20-db-f57kzr\ndb_port = 5432\ndb_user = odoo\ndb_password = %s\nhttp_interface = 0.0.0.0\nproxy_mode = True\nadmin_passwd = %s\nlist_db = False\ndbfilter = ^odoo20$$\n' "$$PASSWORD" "$$ADMIN_PASSWD" > /etc/odoo/odoo.conf
+        # Push a odoo-wl-addons (rama 20.0) => el servicio odoo-20-modulos copia los módulos y redespliega
+        # este servicio; aquí se actualizan los módulos propios YA instalados antes de abrir el servidor.
+        # Si la actualización falla, Odoo no arranca: mejor caído y visible que corriendo a medias.
+        MODS=$$(ls /mnt/extra-addons 2>/dev/null | paste -sd, -)
+        if [ -n "$$MODS" ]; then
+          python3 /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoo20 -u "$$MODS" --stop-after-init --no-http || exit 1
+        fi
         exec python3 /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf
     volumes:
       - odoo-web-data:/var/lib/odoo
