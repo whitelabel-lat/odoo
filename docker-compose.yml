@@ -1,0 +1,63 @@
+# Despliegue de Odoo 20 en Dokploy (Zellia · Odoo 20 · https://odoo20.zellia.io).
+# Construye la imagen con el código de ESTE repositorio; la imagen oficial odoo:20.0 solo
+# aporta el sistema y las librerías. El dominio NO va aquí (es una fila de Dokploy) y las
+# variables ${...} salen de la pestaña Environment de Dokploy.
+services:
+  web:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM odoo:20.0
+        USER root
+        COPY --chown=odoo:odoo . /opt/odoo
+        USER odoo
+        WORKDIR /opt/odoo
+    image: odoo20-zellia:main
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PASSWORD: ${DB_PASSWORD}
+      ADMIN_PASSWD: ${ADMIN_PASSWD}
+    # El odoo.conf se genera al arrancar desde Environment: ninguna contraseña queda en el repo.
+    # http_interface: Odoo 20 escucha solo en 127.0.0.1 por defecto y Traefik no llegaría.
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        printf '[options]\naddons_path = /opt/odoo/addons,/opt/odoo/odoo/addons\ndata_dir = /var/lib/odoo\ndb_host = db\ndb_port = 5432\ndb_user = odoo\ndb_password = %s\nhttp_interface = 0.0.0.0\nproxy_mode = True\nadmin_passwd = %s\nlist_db = False\ndbfilter = ^odoo20$$\n' "$$PASSWORD" "$$ADMIN_PASSWD" > /etc/odoo/odoo.conf
+        exec python3 /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+    networks: [internal, dokploy-network]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  internal:
+  dokploy-network:
+    external: true
+
+volumes:
+  odoo-web-data:
+  odoo-db-data:
