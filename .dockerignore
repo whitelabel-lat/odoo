@@ -1,0 +1,12 @@
+# Lo que NO entra en la imagen de Odoo 20 de Zellia (ver Dockerfile).
+.git
+.github
+.tx
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+**/.env*
+**/*.pem
+**/*.key
+**/__pycache__
