@@ -5,7 +5,6 @@
 .gitignore
 .dockerignore
 Dockerfile
-docker-compose.yml
 **/.env*
 **/*.pem
 **/*.key
