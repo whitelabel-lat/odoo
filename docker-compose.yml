@@ -26,10 +26,12 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
-        printf '[options]\naddons_path = /opt/odoo/addons,/opt/odoo/odoo/addons\ndata_dir = /var/lib/odoo\ndb_host = odoo20-db-f57kzr\ndb_port = 5432\ndb_user = odoo\ndb_password = %s\nhttp_interface = 0.0.0.0\nproxy_mode = True\nadmin_passwd = %s\nlist_db = False\ndbfilter = ^odoo20$$\n' "$$PASSWORD" "$$ADMIN_PASSWD" > /etc/odoo/odoo.conf
+        printf '[options]\naddons_path = /mnt/extra-addons,/opt/odoo/addons,/opt/odoo/odoo/addons\ndata_dir = /var/lib/odoo\ndb_host = odoo20-db-f57kzr\ndb_port = 5432\ndb_user = odoo\ndb_password = %s\nhttp_interface = 0.0.0.0\nproxy_mode = True\nadmin_passwd = %s\nlist_db = False\ndbfilter = ^odoo20$$\n' "$$PASSWORD" "$$ADMIN_PASSWD" > /etc/odoo/odoo.conf
         exec python3 /opt/odoo/odoo-bin -c /etc/odoo/odoo.conf
     volumes:
       - odoo-web-data:/var/lib/odoo
+      # Módulos propios (whitelabel-lat/odoo-wl-addons, rama 20.0), copiados al servidor como en el 19.
+      - ../files/addons:/mnt/extra-addons:ro
     networks: [dokploy-network]
     logging:
       driver: json-file
